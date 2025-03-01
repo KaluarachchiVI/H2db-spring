@@ -1,0 +1,33 @@
+package com.example.controller;
+
+import com.example.model.Employee;
+import com.example.service.EmployeeService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+
+public class EmployeeController {
+	
+    @Autowired
+    private EmployeeService service;
+
+    @PostMapping("/addEmp")
+    public String addEmployee(@RequestBody Employee employee) {
+        service.addEmployee(employee);
+        return "Employee added successfully!";
+    }
+
+    @GetMapping(/"getEmp")
+    public List<Employee> getAllEmployees() {
+        return service.getAllEmployees();
+    }
+
+    @DeleteMapping("deleteEmp")
+    public String deleteEmployee(@PathVariable String id) {
+        service.deleteEmployee(id);
+        return "Employee deleted successfully!";
+    }
+}

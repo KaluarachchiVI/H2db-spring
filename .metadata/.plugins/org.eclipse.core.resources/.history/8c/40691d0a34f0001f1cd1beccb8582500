@@ -1,0 +1,5 @@
+package com.victaz.sms.repository;
+
+public interface StaffRepo {
+
+}

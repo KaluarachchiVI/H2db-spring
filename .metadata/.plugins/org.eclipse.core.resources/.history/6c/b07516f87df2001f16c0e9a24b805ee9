@@ -1,0 +1,32 @@
+package com.example.model;
+
+import com.influxdb.annotations.Column;
+import com.influxdb.annotations.Measurement;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.Instant;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Measurement(name = "employees") // InfluxDB measurement (like a table)
+public class Employee {
+
+    @Column(tag = true) // Acts like a primary key in InfluxDB
+    private String id;
+
+    @Column
+    private String name;
+
+    @Column
+    private String department;
+
+    @Column
+    private double salary;
+
+    @Column(timestamp = true) // Automatically adds a timestamp
+    private Instant timestamp = Instant.now();
+}
+

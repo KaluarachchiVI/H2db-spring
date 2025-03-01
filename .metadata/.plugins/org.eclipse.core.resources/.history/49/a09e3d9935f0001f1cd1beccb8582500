@@ -1,0 +1,23 @@
+package com.victaz.sms.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.victaz.sms.entity.Staff;
+import com.victaz.sms.service.StaffService;
+
+@RestController
+public class StaffController {
+
+	@Autowired
+	private StaffService service;
+
+	@PostMapping("/addStaff")
+	public Staff saveStaff(@RequestBody Staff staff)
+	{
+		return service.addStaff(staff);
+	}
+
+}

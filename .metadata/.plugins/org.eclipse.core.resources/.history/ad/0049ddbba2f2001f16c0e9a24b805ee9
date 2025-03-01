@@ -1,0 +1,126 @@
+package com.example.repository;
+
+import com.example.model.Employee;
+import com.influxdb.client.InfluxDBClient;
+import com.influxdb.client.QueryApi;
+import com.influxdb.client.WriteApi;
+import com.influxdb.client.domain.WritePrecision;
+import com.influxdb.client.write.Point;
+import com.influxdb.query.FluxRecord;
+import com.influxdb.query.FluxTable;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Repository;
+
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+@Repository
+public class EmployeeRepository {
+
+    @Autowired
+    private InfluxDBClient influxDBClient;
+
+    @Autowired
+    private WriteApi writeApi;
+
+    @Value("${influxdb.bucket}")
+    private String bucket;
+
+    @Value("${influxdb.org}")
+    private String org;
+
+    // Create Employee Point manually
+    public Point createEmployeePoint(Employee employee) {
+        return Point.measurement("employees")
+                .addTag("id", employee.getId())
+                .addField("name", employee.getName())
+                .addField("department", employee.getDepartment())
+                .addField("salary", employee.getSalary())
+                .time(employee.getTimestamp(), WritePrecision.NS);
+    }
+
+    // Save Employee to InfluxDB
+    public void save(Employee employee) {
+        // Use the method to create the Point object
+        Point employeePoint = createEmployeePoint(employee);
+        // Write the Point object to InfluxDB
+        writeApi.writePoint(employeePoint);
+    }
+
+    import java.util.HashMap;
+    import java.util.Map;
+
+    public List<Employee> findAll() {
+        String query = "from(bucket: \"" + bucket + "\") |> range(start: -30d)";
+        QueryApi queryApi = influxDBClient.getQueryApi();
+        List<FluxTable> tables = queryApi.query(query);
+
+        List<Employee> employees = new ArrayList<>();
+        for (FluxTable table : tables) {
+            if (table.getRecords() != null) {
+                for (FluxRecord record : table.getRecords()) {
+                    if (record != null) {
+                        // Create a Map from the record's fields
+                        Map<String, Object> fields = new HashMap<>();
+                        for (String column : record.getColumns()) {
+                            fields.put(column, record.getValueByKey(column));
+                        }
+
+                        // Construct the Employee object from the fields
+                        Employee emp = new Employee();
+                        emp.setId(fields.get("id") != null ? fields.get("id").toString() : "Unknown");
+                        emp.setName(fields.get("name") != null ? fields.get("name").toString() : "Unknown");
+                        emp.setDepartment(fields.get("department") != null ? fields.get("department").toString() : "Unknown");
+                        emp.setSalary(fields.get("salary") != null ? Double.parseDouble(fields.get("salary").toString()) : 0.0);
+                        employees.add(emp);
+                    }
+                }
+            }
+        }
+        return employees;
+    }
+
+
+
+    public void delete(String id) {
+        String deleteQuery = "from(bucket: \"" + bucket + "\") |> range(start: -30d) |> filter(fn: (r) => r.id == \"" + id + "\")";
+        influxDBClient.getQueryApi().query(deleteQuery);
+    }
+
+    public Employee getOne(String id) {
+        String query = "from(bucket: \"" + bucket + "\") |> range(start: -30d) |> filter(fn: (r) => r.id == \"" + id + "\")";
+        QueryApi queryApi = influxDBClient.getQueryApi();
+        List<FluxTable> tables = queryApi.query(query);
+
+        if (!tables.isEmpty() && !tables.get(0).getRecords().isEmpty()) {
+            FluxRecord record = tables.get(0).getRecords().get(0);
+            Employee emp = new Employee();
+            emp.setId(record.getValueByKey("id").toString());
+            emp.setName(record.getValueByKey("name").toString());
+            emp.setDepartment(record.getValueByKey("department").toString());
+            emp.setSalary(Double.parseDouble(record.getValueByKey("salary").toString()));
+            return emp;
+        }
+
+        return null;
+    }
+
+    public void update(Employee employee) {
+        String updateQuery = "from(bucket: \"" + bucket + "\") |> range(start: -30d) |> filter(fn: (r) => r.id == \"" + employee.getId() + "\")";
+        QueryApi queryApi = influxDBClient.getQueryApi();
+        List<FluxTable> tables = queryApi.query(updateQuery);
+
+        if (!tables.isEmpty() && !tables.get(0).getRecords().isEmpty()) {
+            FluxRecord record = tables.get(0).getRecords().get(0);
+            String update = "upsert into employees (id, name, department, salary) values (\"" 
+                            + employee.getId() + "\", \"" + employee.getName() + "\", \"" 
+                            + employee.getDepartment() + "\", " + employee.getSalary() + ")";
+            writeApi.writeMeasurement(bucket, org, WritePrecision.S, employee);
+        } else {
+            save(employee);  // If not found, insert the employee
+        }
+    }
+}

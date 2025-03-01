@@ -1,0 +1,25 @@
+# InfluxDB Connection Properties
+management.influx.metrics.export.enabled=true
+management.influx.metrics.export.uri=http://localhost:8086
+management.influx.metrics.export.token=6nlGFWTSloYTYGK4JRpluHczaIVRzG1hGRA4OV30jwfq50E-M7qwoZrYNwpDOIkC8i4kPb3u4OfKUjpsQ26lYg==
+management.influx.metrics.export.org=ollcode
+management.influx.metrics.export.bucket=CRUD
+influxdb.bucket=CRUD
+server.port=8080
+
+
+# Spring Boot settings
+spring.mandatory-file-encoding=UTF-8
+spring.profiles.active=dev
+
+
+spring.web.resources.static-locations=classpath:/static/
+
+spring.mvc.static-path-pattern= /static/**
+#spring.web.resources.static-locations=classpath:/resources/
+
+
+#logging.level.org.springframework=DEBUG
+#logging.level.com.example=DEBUG
+
+spring.web.resources.add-mappings=false

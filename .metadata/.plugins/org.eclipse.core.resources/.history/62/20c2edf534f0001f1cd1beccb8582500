@@ -1,0 +1,5 @@
+package com.victaz.sms.service;
+
+public class StaffService {
+
+}

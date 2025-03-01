@@ -1,0 +1,50 @@
+package com.example.controller;
+
+import com.example.model.Employee;
+import com.example.service.EmployeeService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
+@RestController
+@RequestMapping("/employees")
+public class EmployeeController {
+
+    @Autowired
+    private EmployeeService service;
+
+    private static final Logger logger = LoggerFactory.getLogger(EmployeeController.class);
+
+    @PostMapping
+    public ResponseEntity<String> addEmployee(@RequestBody Employee employee) {
+        logger.info("Adding employee: {}", employee);
+        service.addEmployee(employee);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Employee added successfully!");
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Employee>> getAllEmployees() {
+        logger.info("Getting all employees");
+        List<Employee> employees = service.getAllEmployees();
+        return employees.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(employees);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteEmployee(@PathVariable String id) {
+        logger.info("Deleting employee with ID: {}", id);
+        service.deleteEmployee(id);
+        return ResponseEntity.ok("Employee deleted successfully!");
+    }
+    
+    @RequestMapping("/**")
+    public ResponseEntity<String> catchAll() {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Resource not found.");
+    }
+
+}

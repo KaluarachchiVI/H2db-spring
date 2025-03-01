@@ -1,0 +1,50 @@
+package com.example.service;
+
+import com.example.model.Employee;
+import com.example.repository.EmployeeRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class EmployeeService {
+
+    @Autowired
+    private EmployeeRepository repository;
+
+    // Add an employee
+    public void addEmployee(Employee employee) {
+        repository.save(employee);
+    }
+
+    // Get all employees
+    public List<Employee> getAllEmployees() {
+        return repository.findAll();
+    }
+
+    // Get employee by ID
+    public Employee getEmployeeById(String id) {
+        Optional<Employee> employee = repository.findById(id);
+        return employee.orElse(null);
+    }
+
+    // Delete an employee by ID
+    public boolean deleteEmployee(String id) {
+        if (repository.existsById(id)) {
+            repository.deleteById(id);
+            return true;
+        }
+        return false;
+    }
+
+    // Update an employee by ID
+    public Employee updateEmployee(String id, Employee employee) {
+        if (repository.existsById(id)) {
+            employee.setId(id); // Ensure the employee's ID stays the same
+            return repository.save(employee);
+        }
+        return null;
+    }
+}

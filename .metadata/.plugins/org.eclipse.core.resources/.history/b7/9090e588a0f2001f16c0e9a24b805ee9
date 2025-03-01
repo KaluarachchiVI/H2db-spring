@@ -1,0 +1,106 @@
+package com.example.repository;
+
+import com.example.model.Employee;
+import com.influxdb.client.InfluxDBClient;
+import com.influxdb.client.QueryApi;
+import com.influxdb.client.WriteApi;
+import com.influxdb.client.domain.WritePrecision;
+import com.influxdb.query.FluxRecord;
+import com.influxdb.query.FluxTable;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Repository;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Repository
+public class EmployeeRepository {
+
+    @Autowired
+    private InfluxDBClient influxDBClient;
+
+    @Autowired
+    private WriteApi writeApi;
+
+    @Value("${influxdb.bucket}")
+    private String bucket;  // Get the bucket from the configuration
+
+    @Value("${influxdb.org}")
+    private String org;  // Get the org from the configuration
+
+    public void save(Employee employee) {
+    	 employee.printFields();
+        writeApi.writeMeasurement(bucket, org, WritePrecision.S, employee); // Use WritePrecision.S (second)
+    }
+
+
+    public List<Employee> findAll() {
+        String query = "from(bucket: \"" + bucket + "\") |> range(start: -30d)";
+        QueryApi queryApi = influxDBClient.getQueryApi();
+        List<FluxTable> tables = queryApi.query(query);
+
+        List<Employee> employees = new ArrayList<>();
+        for (FluxTable table : tables) {
+            if (table.getRecords() != null) {
+                for (FluxRecord record : table.getRecords()) {
+                    if (record != null) {
+                        Employee emp = new Employee();
+                        // Null checks for each field in case the data doesn't exist in the FluxRecord
+                        emp.setId(record.getValueByKey("id") != null ? record.getValueByKey("id").toString() : "Unknown");
+                        emp.setName(record.getValueByKey("name") != null ? record.getValueByKey("name").toString() : "Unknown");
+                        emp.setDepartment(record.getValueByKey("department") != null ? record.getValueByKey("department").toString() : "Unknown");
+                        emp.setSalary(record.getValueByKey("salary") != null ? Double.parseDouble(record.getValueByKey("salary").toString()) : 0.0);
+                        employees.add(emp);
+                    }
+                }
+            }
+        }
+
+        return employees;
+    }
+
+    public void delete(String id) {
+        String deleteQuery = "from(bucket: \"" + bucket + "\") |> range(start: -30d) |> filter(fn: (r) => r.id == \"" + id + "\")";
+        influxDBClient.getQueryApi().query(deleteQuery);
+    }
+    
+    public Employee getOne(String id) {
+        String query = "from(bucket: \"" + bucket + "\") |> range(start: -30d) |> filter(fn: (r) => r.id == \"" + id + "\")";
+        QueryApi queryApi = influxDBClient.getQueryApi();
+        List<FluxTable> tables = queryApi.query(query);
+
+        if (!tables.isEmpty() && !tables.get(0).getRecords().isEmpty()) {
+            FluxRecord record = tables.get(0).getRecords().get(0);  // Assuming only one record will be returned for an ID
+            Employee emp = new Employee();
+            emp.setId(record.getValueByKey("id").toString());
+            emp.setName(record.getValueByKey("name").toString());
+            emp.setDepartment(record.getValueByKey("department").toString());
+            emp.setSalary(Double.parseDouble(record.getValueByKey("salary").toString()));
+            return emp;
+        }
+
+        return null;  // Return null if employee is not found
+    }
+
+    public void update(Employee employee) {
+    	 employee.printFields();
+        String updateQuery = "from(bucket: \"" + bucket + "\") |> range(start: -30d) |> filter(fn: (r) => r.id == \"" + employee.getId() + "\")";
+        QueryApi queryApi = influxDBClient.getQueryApi();
+        List<FluxTable> tables = queryApi.query(updateQuery);
+
+        if (!tables.isEmpty() && !tables.get(0).getRecords().isEmpty()) {
+            FluxRecord record = tables.get(0).getRecords().get(0);
+
+            // Update the employee record if it exists
+            String update = "upsert into employees (id, name, department, salary) values (\"" 
+                            + employee.getId() + "\", \"" + employee.getName() + "\", \"" 
+                            + employee.getDepartment() + "\", " + employee.getSalary() + ")";
+            writeApi.writeMeasurement(bucket, org, WritePrecision.S, employee);
+        } else {
+            // If no matching record is found, you can either return an error or add a new employee.
+            save(employee);  // You may want to handle this as an upsert or insert operation
+        }
+    }
+
+}

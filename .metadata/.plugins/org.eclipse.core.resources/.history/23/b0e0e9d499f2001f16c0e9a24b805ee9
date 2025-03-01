@@ -1,0 +1,26 @@
+package com.influx.sms;
+
+import org.springframework.boot.SpringApplication;
+
+import org.springframework.context.annotation.Bean;
+
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.boot.web.servlet.ServletContextInitializer;
+
+@SpringBootApplication(
+	    scanBasePackages = "com.example",
+	    exclude = {DataSourceAutoConfiguration.class}
+	)
+
+public class NewCrudApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(NewCrudApplication.class, args);
+	}
+	@Bean
+    public ServletContextInitializer servletContextInitializer() {
+        return servletContext -> servletContext.setInitParameter("spring.resources.static-locations", "classpath:/"); 
+    }
+
+}

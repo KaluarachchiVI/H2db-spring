@@ -1,0 +1,5 @@
+package com.victaz.sms.entity;
+
+public class Staff {
+
+}

@@ -1,0 +1,49 @@
+package com.example.model;
+
+import com.influxdb.annotations.Column;
+import com.influxdb.annotations.Measurement;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.lang.reflect.Field;
+import java.time.Instant;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Measurement(name = "employees") // InfluxDB measurement (like a table)
+public class Employee {
+
+    @Column(tag = true) // Acts like a primary key in InfluxDB
+    private String id;
+
+    @Column
+    private String name;
+    
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Column
+    private String department;
+
+    @Column
+    private double salary;
+
+    @Column(timestamp = true) // Automatically adds a timestamp
+    private Instant timestamp = Instant.now();
+    
+    public void printFields() {
+        Field[] fields = Employee.class.getDeclaredFields();
+        for (Field field : fields) {
+            field.setAccessible(true); // Ensure it's accessible
+            System.out.println("Field: " + field.getName() + " | Type: " + field.getType());
+        }
+    }
+
+}

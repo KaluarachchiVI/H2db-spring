@@ -1,0 +1,21 @@
+package com.victaz.sms.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
+import com.victaz.sms.entity.Staff;
+import com.victaz.sms.repository.StaffRepo;
+
+@Service
+public class StaffService {
+	
+	@Autowired
+	private StaffRepo repository;
+
+	public Staff addStaff(Staff staff) {
+		
+		return repository.save(staff);
+	}
+}

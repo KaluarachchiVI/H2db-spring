@@ -1,0 +1,51 @@
+package com.example.repository;
+
+import com.example.model.Employee;
+import com.influxdb.client.InfluxDBClient;
+import com.influxdb.client.QueryApi;
+import com.influxdb.client.WriteApi;
+import com.influxdb.query.FluxTable;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Repository
+public class EmployeeRepository {
+
+    @Autowired
+    private InfluxDBClient influxDBClient;
+
+    @Autowired
+    private WriteApi writeApi;
+
+    private final String bucket = "employee_bucket"; // Match with `application.properties`
+
+    public void save(Employee employee) {
+        writeApi.writeMeasurement(bucket, "your_org_name", null, employee);
+    }
+
+    public List<Employee> findAll() {
+        String query = "from(bucket: \"" + bucket + "\") |> range(start: -30d)";
+        QueryApi queryApi = influxDBClient.getQueryApi();
+        List<FluxTable> tables = queryApi.query(query);
+        
+        List<Employee> employees = new ArrayList<>();
+        tables.forEach(table -> table.getRecords().forEach(record -> {
+            Employee emp = new Employee();
+            emp.setId(record.getValueByKey("id").toString());
+            emp.setName(record.getValueByKey("name").toString());
+            emp.setDepartment(record.getValueByKey("department").toString());
+            emp.setSalary(Double.parseDouble(record.getValueByKey("salary").toString()));
+            employees.add(emp);
+        }));
+
+        return employees;
+    }
+
+    public void delete(String id) {
+        String deleteQuery = "from(bucket: \"" + bucket + "\") |> range(start: -30d) |> filter(fn: (r) => r.id == \"" + id + "\")";
+        influxDBClient.getQueryApi().query(deleteQuery);
+    }
+}

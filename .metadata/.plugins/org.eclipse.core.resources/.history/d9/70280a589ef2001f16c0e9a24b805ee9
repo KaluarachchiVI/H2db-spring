@@ -1,0 +1,34 @@
+package com.example.config;
+
+import com.influxdb.client.InfluxDBClient;
+import com.influxdb.client.InfluxDBClientFactory;
+import com.influxdb.client.WriteApi;
+import com.influxdb.client.WriteApiBlocking;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class InfluxDBConfig {
+	
+	private static final String URL = "http://localhost:8086";
+    private static final String TOKEN = "6nlGFWTSloYTYGK4JRpluHczaIVRzG1hGRA4OV30jwfq50E-M7qwoZrYNwpDOIkC8i4kPb3u4OfKUjpsQ26lYg==";
+    private static final String ORG = "ollcode";
+    private static final String BUCKET = "CRUD";
+
+    @Bean
+    InfluxDBClient influxDBClient() {
+        return InfluxDBClientFactory.create(URL, TOKEN.toCharArray(), ORG, BUCKET);
+    }
+
+    @Bean
+    WriteApi writeApi(InfluxDBClient influxDBClient) {
+        return influxDBClient.makeWriteApi();
+    }
+    
+    @Bean
+    WriteApiBlocking writeApi() {
+        InfluxDBClient client = InfluxDBClientFactory.create(URL, TOKEN.toCharArray(), ORG, BUCKET);
+        return client.getWriteApiBlocking();
+    }
+}

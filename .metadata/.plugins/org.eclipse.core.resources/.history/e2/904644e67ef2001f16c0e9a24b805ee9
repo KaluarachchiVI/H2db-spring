@@ -1,0 +1,4 @@
+spring.influx.url=http://localhost:8086
+spring.influx.token=your_influxdb_token
+spring.influx.org=your_org_name
+spring.influx.bucket=your_bucket_name

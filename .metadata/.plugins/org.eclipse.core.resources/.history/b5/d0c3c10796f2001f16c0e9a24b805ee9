@@ -1,0 +1,10 @@
+{
+  "properties": [
+    {
+      "name": "influxdb.bucket",
+      "type": "java.lang.String",
+      "description": "The bucket name for InfluxDB storage.",
+      "defaultValue": "default-bucket"
+    }
+  ]
+}
